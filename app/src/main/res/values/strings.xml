@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">ActionStack</string>
+    <string name="accessibility_service_desc">Permite a ActionStack simular toques del sistema para automatizar tareas, ir Atrás, o volver al Inicio.</string>
+</resources>

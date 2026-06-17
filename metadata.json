@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Atajos de Android",
+  "description": "Una aplicación inspirada en Atajos de iPhone para crear y automatizar tareas personalizadas con acciones interactivas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
