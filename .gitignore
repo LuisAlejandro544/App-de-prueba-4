@@ -16,3 +16,5 @@
 local.properties
 .env
 debug.keystore
+# Permite registrar el archivo key de release
+!actionstack-key.jks

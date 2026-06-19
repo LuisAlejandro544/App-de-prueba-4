@@ -1,3 +1,5 @@
+import java.io.File
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -21,12 +23,13 @@ android {
   }
 
   signingConfigs {
+    val keystoreFile = file("${rootDir}/actionstack-key.jks")
+
     create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
+      storeFile = keystoreFile
+      storePassword = "Luisanita*163"
+      keyAlias = "actionstack-key"
+      keyPassword = "Luisanita*163"
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
@@ -38,12 +41,14 @@ android {
 
   buildTypes {
     release {
-      isCrunchPngs = false
-      isMinifyEnabled = false
+      isCrunchPngs = true
+      isMinifyEnabled = true
+      isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.getByName("release")
     }
     debug {
+      signingConfig = signingConfigs.getByName("debugConfig")
     }
   }
   compileOptions {
@@ -118,3 +123,47 @@ dependencies {
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
 }
+
+tasks.register("generateReleaseKeystore") {
+  val path = file("${rootDir}/actionstack-key.jks").absolutePath
+  doLast {
+    val keystoreFile = File(path)
+    if (!keystoreFile.exists()) {
+      println("Generando llave de firma Release...")
+      val dname = "CN=Luis Alejandro Sosa Camacho, OU=Desarrollo, O=ActionStack, L=Merida, S=Venezuela, C=VE"
+      val cmd = listOf(
+        "keytool", "-genkeypair",
+        "-v",
+        "-keystore", path,
+        "-alias", "actionstack-key",
+        "-keyalg", "RSA",
+        "-keysize", "2048",
+        "-validity", "10000",
+        "-storepass", "Luisanita*163",
+        "-keypass", "Luisanita*163",
+        "-dname", dname
+      )
+      try {
+        val process = ProcessBuilder(cmd).inheritIO().start()
+        val exitCode = process.waitFor()
+        if (exitCode == 0) {
+          println("¡Llave generada exitosamente!")
+        } else {
+          println("Error al generar la llave. Código de salida: $exitCode")
+        }
+      } catch (e: Exception) {
+        println("Error generating keystore: ${e.message}")
+      }
+    } else {
+      println("La llave de firma ya existe.")
+    }
+  }
+}
+
+// Asegurarse de que cualquier tarea de empaquetado o firma de release dependa de la generación de la llave
+tasks.configureEach {
+  if (name.contains("Release") && name != "generateReleaseKeystore") {
+    dependsOn("generateReleaseKeystore")
+  }
+}
+

@@ -16,3 +16,43 @@ Este archivo sirve como manual y referencia vital de arquitectura para cualquier
 9. **Soporte de Locución Offline y Selección de Voz**: El modulo de `SpeechHandler` debe preservar la compatibilidad con motores de síntesis de voz locales e independientes (como *Piper* o *Sherpa-Onnx*). Nunca fuerces APIs en la nube para locución; siempre consume y detecta dinámicamente el conjunto de voces provistos por los motores instalados en el sistema Android usando `TextToSpeech.voices`.
 10. **Alineación Visual de los Ladrillos Neón**: Al agregar o modificar bloques de acción, respeta la paleta neón brillante establecida en `ActionBlockItem.kt` para conservar la categorización visual por color neón (Voz, Sistema, Sensores, etc.) brindando una interfaz atractiva y con alto contraste.
 11. **Flujo de Onboarding Inmersivo**: Si se requiere alterar los estados de bienvenida, recuerda que el flujo se rige en `OnboardingScreen.kt` mediante diapositivas nativas y limpias, guardando el estado mediante preferencias para salvaguardar la privacidad offline. No utilices cargadores de imágenes pesados que pongan en jaque la compilación en dispositivos limitados.
+
+---
+
+## 📦 Proceso de Compilación del APK de Release
+
+Para generar y empaquetar correctamente la aplicación lista para producción (Release) sin errores de caché ni de visualización del editor de AI Studio, sigue estas directrices estrictas:
+
+### 1. Comando de Compilación Obligatorio
+Dado que las tareas personalizadas (como `generateReleaseKeystore`) inyectan parámetros dinámicos que entran en conflicto con la serialización estática de Gradle, **SIEMPRE** se debe desactivar el caché de configuración durante la compilación de Release:
+```bash
+gradle :app:assembleRelease --no-configuration-cache
+```
+
+### 2. Gestión del Keystore y Firma
+- La generación de la llave JKS (`actionstack-key.jks`) se ejecuta automáticamente de forma perezosa antes del empaquetado de Release. No es necesario regenerarla manualmente a menos que se borre.
+- Los datos de firma ya están configurados en el archivo `build.gradle.kts`.
+
+### 3. Evitar Bloqueos de Descarga del Editor (Estrategia del APK)
+- Si el APK generado se encuentra dentro de carpetas ocultas o del sistema (como `.build-outputs/`), el entorno de AI Studio suele marcarlo en rojo, arrojar errores de descompresión o descargarse con un peso de `0 bytes`.
+- **Solución Efectiva**: Inmediatamente después de compilar, mueve el APK desde la ruta de salida de Gradle hacia la raíz del proyecto con la herramienta de mover archivos:
+  - Origen: `/app/build/outputs/apk/release/app-release.apk`
+  - Destino: `/app-release.apk`
+- Al colocarlo en la raíz como `/app-release.apk`, el editor lo indexará con su peso real (es normal que pese entre **11.5MB y 12.5MB** debido a las bibliotecas nativas e interfaces de Jetpack Compose y KSP) y permitirá descargarlo de manera limpia o exportarlo en el ZIP completo sin corrupción.
+
+---
+
+## 🚀 Ideas de Futuras Integraciones y Optimización del APK
+
+Para elevar el rendimiento técnico y la filosofía de la aplicación, se proponen las siguientes integraciones y optimizaciones:
+
+1. **Optimización con ProGuard & R8 (Reducción de Peso)**:
+   - Configurar reglas de descarte más agresivas en `proguard-rules.pro` para optimizar y limpiar bibliotecas de Compose y Kotlin Coroutines no utilizadas.
+   - Habilitar la optimización completa (`isMinifyEnabled = true` junto con Shrinking de recursos `isShrinkResources = true`) en la firma Release para reducir el tamaño final del APK por debajo de los 9MB.
+2. **Modularización de Sensores y Acciones**:
+   - Continuar extrayendo los módulos de procesamiento dentro de `service/` en submódulos independientes si la lógica de geolocalización o de reconocimiento de voz se vuelve compleja.
+3. **Motores de Síntesis de Voz (offline) Personalizados**:
+   - Facilitar un menú de depuración para cargar modelos ONNX externos en local que ofrezcan locuciones hiper-realistas offline sin depender de las voces predefinidas de Google Android TTS.
+4. **Resalvaguarda para F-Droid**:
+   - Asegurarse de que no se use ninguna dependencia que involucre Google Play Services de forma fuerte; si se usan mapas o GPS, prever proveedores libres y abiertos como OpenStreetMap o la API nativa de localización de Android de bajo nivel.
+

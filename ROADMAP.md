@@ -43,3 +43,10 @@ ActionStack aspira a ser el equivalente de código abierto definitivo a "Shortcu
   - Permitir que las acciones hereden resultados o datos de la acción anterior (por ejemplo, capturar un texto copiado del portapapeles y mandarlo al lector TTS o enviarlo como notificación).
 - **Control IoT Local**:
   - Bloques HTTP totalmente locales (Ktor/Retrofit) para controlar dispositivos del hogar inteligente compatibles con integraciones locales offline.
+
+### Fase 4: Despliegue, CI/CD y Autonomía de Compilación (Próximo Objetivo de Calidad)
+- **Migración a Repositorio Privado y Automatización con GitHub Actions**:
+  - Configurar un flujo automático (CI/CD) para compilar y firmar el APK de Release directamente al subir cambios al repositorio.
+  - Simplificar la firma de producción posicionando los archivos clave (`actionstack-key.jks`, configuración de almacén de llaves) de forma física en la raíz del entorno privado, descartando por completo el tedioso manejo de cadenas Base64.
+  - Optimizar la experiencia de descarga del instalador descargando automáticamente el APK resultante de las ejecuciones privadas de Actions, eliminando las restricciones de almacenamiento, advertencias visuales del editor en la nube y optimizando el flujo de pruebas.
+
