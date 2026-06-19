@@ -43,20 +43,34 @@ jobs:
             -validity 10000 \
             -dname "CN=N-Educate, OU=N-Educate, O=N-Educate, L=Accra, S=Greater Accra, C=GH"
 
-      # 1. CAMBIADO: De 'bundleRelease' a 'assembleRelease'
-      - name: Build Signed Release APK
+      # Compila el APK (saldrá como un-signed si Gradle no está configurado)
+      - name: Build Release APK
         run: ./gradlew assembleRelease --stacktrace
 
-      # 2. CAMBIADO: Ruta y nombre para el APK
+      # Firma el APK manualmente usando apksigner con la llave generada arriba
+      - name: Sign APK
+        run: |
+          # Encuentra el APK generado (suele llamarse app-release-unsigned.apk o app-release.apk según tu build.gradle)
+          APK_PATH=$(find app/build/outputs/apk/release/ -name "*.apk" | head -n 1)
+          
+          # Firma el APK usando el SDK de Android instalado en el entorno
+          $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
+            --ks "$KEYSTORE_PATH" \
+            --ks-pass pass:"$STORE_PASSWORD" \
+            --key-pass pass:"$KEY_PASSWORD" \
+            --ks-key-alias upload \
+            --out app/build/outputs/apk/release/app-release-signed.apk \
+            "$APK_PATH"
+
+      # Sube el APK ya firmado
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
-          path: app/build/outputs/apk/release/app-release.apk
+          path: app/build/outputs/apk/release/app-release-signed.apk
 
       - name: Upload Keystore Backup
         uses: actions/upload-artifact@v4
         with:
           name: save-this-keystore
           path: my-upload-key.jks
-          
